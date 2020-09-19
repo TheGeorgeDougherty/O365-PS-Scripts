@@ -16,9 +16,9 @@ Restore-RecycleBin -siteUrl https://orgname.sharepoint.com/sites/sitename -newer
 #>
 function Restore-RecycleBin 
 {
-    param ($siteUrl, $maxRows, $newerDate, $olderDate, $delEmail)
+    param ($siteUrl, $maxRows, $batchSize, $newerDate, $olderDate, $delEmail)
 
-    if ($newDate -eq $null -and $olderDate -eq $null -and $delEmail -eq $null) {
+    if ($newerDate -eq $null -and $olderDate -eq $null -and $delEmail -eq $null) {
         Write-Host "No filter parameters supplied.  Terminating function."
         End
     }
@@ -32,6 +32,7 @@ function Restore-RecycleBin
 
     $today = (Get-Date)
     if ($maxRows -eq $null) { $maxRows = 10000 }
+    if ($batchSize -eq $null) { $batchSize = 500 }
 
     #If any date parameter is supplied, parse to datetime, set default dates for omitted values, and check for email 
     if ($olderDate -ne $null -or $newerDate -ne $null) {
@@ -81,8 +82,7 @@ function Restore-RecycleBin
     $restoreList = $restoreSet | select Id, ItemType, LeafName, DirName
     $restoreList = $restoreList | Sort-Object -Property @{expression ='ItemType'; descending = $true},@{expression = "DirName"; descending = $false} , @{expression = "LeafName"; descending = $false} 
 
-    #Batch restore $BatchSize # of items
-    $BatchSize = 500
+    #Batch restore $batchSize # of items
     #Set SPO API call path for restoration action
     $apiCall = $siteUrl + "/_api/site/RecycleBin/RestoreByIds"
 
@@ -93,7 +93,7 @@ function Restore-RecycleBin
     $totalProcd = 0
     $leftToProcess = $restoreListCount - $totalProcd
     while($leftToProcess -gt 0){
-        If($leftToProcess -lt $BatchSize){$numToProcess = $leftToProcess} Else {$numToProcess = $BatchSize}
+        If($leftToProcess -lt $batchSize){$numToProcess = $leftToProcess} Else {$numToProcess = $batchSize}
         Write-Host -ForegroundColor Yellow "Building statement to restore the following $numToProcess files"
         $body = "{""ids"":["
         for($i=0; $i -lt $numToProcess; $i++){
@@ -114,7 +114,7 @@ function Restore-RecycleBin
         catch {
             Write-Error "Unable to Restore"     
         }
-        $totalProcd += $BatchSize
+        $totalProcd += $batchSize
         $leftToProcess = $restoreListCount - $totalProcd
     }
     #Disconnect from SPO
