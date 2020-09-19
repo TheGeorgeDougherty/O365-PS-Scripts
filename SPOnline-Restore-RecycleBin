@@ -107,7 +107,7 @@ function Restore-RecycleBin
         $body += "]}"
         #Report list of Id's and submit to API for restoration
         Write-Host -ForegroundColor Yellow $body
-        Write-Host -ForegroundColor Yellow "Performing API Call to Restore items from RecycleBin. $leftToProcess items remaining..."
+        Write-Host -ForegroundColor Yellow "Performing API Call to Restore $numToProcess items from RecycleBin. $leftToProcess items remaining..."
         try {
             Invoke-PnPSPRestMethod -Method Post -Url $apiCall -Content $body | Out-Null
         }
